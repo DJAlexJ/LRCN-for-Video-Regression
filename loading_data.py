@@ -1,23 +1,32 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import os
+import pandas as pd
 import torch
-from torchvision import datasets
+from torchvision import datasets, transforms
+from config import MARKUP_PATH, TRAINING_PATH
+
+markup = pd.read_excel(MARKUP_PATH)
 
 def load_data(dir_names, verbose=False, batch_size=6):
     """
     dir_names: list of directory names containing video frames
     verbose: add verbosity to loading process
     batch_size: loading n sequences per function call
+    
+    return:
+    images: torch.Tensor
+    labels: torch.Tensor
+    dir_names: list
     """
+    transform = transforms.Compose([transforms.Resize(255),
+                                transforms.CenterCrop(224),
+                                transforms.ToTensor()])
+    
     bs = batch_size
     lst_images = []
     labels = []
     for subdir in dir_names:
+        if not os.path.isdir(f'{TRAINING_PATH}/{subdir}'):
+            continue
         if bs == 0:
             break
         if verbose:

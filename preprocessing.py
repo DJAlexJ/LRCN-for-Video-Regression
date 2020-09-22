@@ -11,11 +11,11 @@ from decord import cpu, gpu
 import moviepy
 import moviepy.editor
 import shutil
+from config import FPATH, TRAINING_PATH, MARKUP_PATH
 
 # imageio.plugins.ffmpeg.download()
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-FPATH = "."
 
 def extract_frames(video_path, frames_dir, overwrite=False, start=-1, end=-1, every=1):
     """
@@ -82,12 +82,10 @@ def video_to_frames(video_path, frames_dir, overwrite=False, every=1):
 
     return os.path.join(frames_dir, video_filename)  # when done return the directory containing the frames
 
-def preprocess(path, train_path, movie_name, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
+def preprocess(movie_name, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
   
     """
       Preprocesses a movie trailer making subclips and then extracting sequences of frames
-      :param path: path to the movie trailer
-      :param train_path: path to the directory with sequences
       :param movie_name: movie name
       :param n_subclips: number of subclips to make from the trailer
       :param subclip_duration: duration of a subclip
@@ -102,13 +100,13 @@ def preprocess(path, train_path, movie_name, n_subclips=3, subclip_duration=30, 
     #Extracting subclip from trailer
     base = 10
 
-    os.mkdir(f"{path}/{name}")
+    os.mkdir(f"{FPATH}/{name}")
     for i in range(n_subclips): 
         if verbose:
             print(f"{i} iteration...")
             print("....Making subclip....")
         try:
-            ffmpeg_extract_subclip(f"{path}/{movie_name}", base, base+subclip_duration, targetname=f"{path}/{name}/{i}.{format}")
+            ffmpeg_extract_subclip(f"{FPATH}/{movie_name}", base, base+subclip_duration, targetname=f"{FPATH}/{name}/{i}.{format}")
             base = base + subclip_duration
         except BaseException:
             print(f"Some error occured during {i+1} extraction")
@@ -116,37 +114,37 @@ def preprocess(path, train_path, movie_name, n_subclips=3, subclip_duration=30, 
 
         #Check if all subclips were correctly created
         try:
-            video = moviepy.editor.VideoFileClip(f"{path}/{name}/{i}.{format}")
+            video = moviepy.editor.VideoFileClip(f"{FPATH}/{name}/{i}.{format}")
             if int(video.duration) <= subclip_duration//2:
                 raise DurationError
         except:
             print(f"The {i} subclip was not correctly created, deleting...")
-            os.remove(f"{path}/{name}/{i}.{format}")
+            os.remove(f"{FPATH}/{name}/{i}.{format}")
             continue
 
         #Creating frames
         if verbose:
             print("....Extracting frames....")
-        os.makedirs(f"{train_path}/{name+'_'+str(i)}", exist_ok=True)   #Creating directory for Train dataset
+        os.makedirs(f"{TRAINING_PATH}/{name+'_'+str(i)}", exist_ok=True)   #Creating directory for Train dataset
         try:
-            video_to_frames(f"{path}/{name}/{i}.{format}", f"{train_path}/{name+'_'+str(i)}", overwrite=False, every=frequency)
+            video_to_frames(f"{FPATH}/{name}/{i}.{format}", f"{TRAINING_PATH}/{name+'_'+str(i)}", overwrite=False, every=frequency)
         except:
             print("Error occured while executing VIDEO_TO_FRAMES")
-            os.rmdir(f"{train_path}/{name+'_'+str(i)}/{i}")
-            os.rmdir(f"{train_path}/{name+'_'+str(i)}")
+            os.rmdir(f"{TRAINING_PATH}/{name+'_'+str(i)}/{i}")
+            os.rmdir(f"{TRAINING_PATH}/{name+'_'+str(i)}")
             continue
 
     #Delete directory with subclips
-    if name in os.listdir(f"{path}"):   
-        shutil.rmtree(f"{path}/{name}")
+    if name in os.listdir(f"{FPATH}"):   
+        shutil.rmtree(f"{FPATH}/{name}")
 
-def movie_preprocessing(path, train_path, movie_list, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
+def movie_preprocessing(movie_list, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
     for movie_name in movie_list:
         print(f"Preprocessing {movie_name}")
-        preprocess(path, train_path, movie_name, n_subclips, subclip_duration, frequency, verbose)
+        preprocess(movie_name, n_subclips, subclip_duration, frequency, verbose)
         
 
 if __name__ == '__main__':
-    markup = pd.read_csv(f'{FPATH}/trailers.csv')
+    markup = pd.read_csv(MARKUP_PATH)
     movie_list = markup['Name'].values
-    movie_preprocessing(f'{FPATH}/100trailers', f'{FPATH}/TrainData', movie_list=movie_list, verbose=True)
+    movie_preprocessing(movie_list=movie_list, verbose=True)
