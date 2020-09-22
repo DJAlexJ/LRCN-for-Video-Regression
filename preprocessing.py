@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import cv2
 import os
-from google.colab.patches import cv2_imshow
 import imageio
 from decord import VideoReader
 import shutil
@@ -13,28 +12,10 @@ import moviepy
 import moviepy.editor
 import shutil
 
-imageio.plugins.ffmpeg.download()
+# imageio.plugins.ffmpeg.download()
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
-FPATH = "./"
-markup = pd.read_csv(f'{FPATH}/trailers.csv')
-movie_list = markup['Name'].values
-
-"""**Making sublcips (30 seconds duration)**"""
-#Check if a subclip was correctly created, otherwise delete it
-for film_dir in os.listdir(f"{FPATH}"):
-    #Check whether film_dir is directory, but not film trailer
-    if os.path.isdir(f"{FPATH}/{film_dir}") and film_dir !='TrainData':
-        for subclip in os.listdir(f"{FPATH}/{film_dir}"):
-            try:
-                video = moviepy.editor.VideoFileClip(f"{FPATH}/{film_dir}/{subclip}")
-                if int(video.duration) <= 20:
-                  raise DurationError
-            except:
-                print(f"The subclip {subclip} of {film_dir} was not correctly created, deleting...")
-                os.remove(f"{FPATH}/{film_dir}/{subclip}")
-
-"""**Making separate frames from each subcip**"""
+FPATH = "."
 
 def extract_frames(video_path, frames_dir, overwrite=False, start=-1, end=-1, every=1):
     """
@@ -166,4 +147,6 @@ def movie_preprocessing(path, train_path, movie_list, n_subclips=3, subclip_dura
         
 
 if __name__ == '__main__':
+    markup = pd.read_csv(f'{FPATH}/trailers.csv')
+    movie_list = markup['Name'].values
     movie_preprocessing(f'{FPATH}/100trailers', f'{FPATH}/TrainData', movie_list=movie_list, verbose=True)

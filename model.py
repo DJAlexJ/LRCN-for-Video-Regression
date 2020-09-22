@@ -1,8 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
+import torch
 
 class CNN(torch.nn.Module):
     def __init__(self):
