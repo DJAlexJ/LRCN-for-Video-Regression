@@ -11,7 +11,7 @@ from decord import cpu, gpu
 import moviepy
 import moviepy.editor
 import shutil
-from config import FPATH, TRAINING_PATH, MARKUP_PATH
+from config import FPATH, TRAINING_PATH, PREDICTION_PATH, MARKUP_PATH
 
 # imageio.plugins.ffmpeg.download()
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
@@ -82,16 +82,26 @@ def video_to_frames(video_path, frames_dir, overwrite=False, every=1):
 
     return os.path.join(frames_dir, video_filename)  # when done return the directory containing the frames
 
-def preprocess(movie_name, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
+def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
   
     """
       Preprocesses a movie trailer making subclips and then extracting sequences of frames
       :param movie_name: movie name
+      :train: boolean flag to determine whether preprocessing is performed for training videos or not
       :param n_subclips: number of subclips to make from the trailer
       :param subclip_duration: duration of a subclip
       :param frequency: frequency of extracting frames from subclips
       :param verbose: increase verbosity if True
     """
+    if train == True:
+        if not os.path.isdir(TRAINING_PATH):
+            os.mkdir(TRAINING_PATH)
+        DEST = TRAINING_PATH
+    else:
+        if not os.path.isdir(PREDICTION_PATH):
+            os.mkdir(PREDICTION_PATH)
+        DEST = PREDICTION_PATH
+        
     name = '.'.join(movie_name.split('.')[:-1])
     format = movie_name.split('.')[-1]
     if format == 'flv':   #Decord does not work with flv format
@@ -125,13 +135,13 @@ def preprocess(movie_name, n_subclips=3, subclip_duration=30, frequency=45, verb
         #Creating frames
         if verbose:
             print("....Extracting frames....")
-        os.makedirs(f"{TRAINING_PATH}/{name+'_'+str(i)}", exist_ok=True)   #Creating directory for Train dataset
+        os.makedirs(f"{DEST}/{name+'_'+str(i)}", exist_ok=True)   #Creating directory for Train dataset
         try:
-            video_to_frames(f"{FPATH}/{name}/{i}.{format}", f"{TRAINING_PATH}/{name+'_'+str(i)}", overwrite=False, every=frequency)
+            video_to_frames(f"{FPATH}/{name}/{i}.{format}", f"{DEST}/{name+'_'+str(i)}", overwrite=False, every=frequency)
         except:
             print("Error occured while executing VIDEO_TO_FRAMES")
-            os.rmdir(f"{TRAINING_PATH}/{name+'_'+str(i)}/{i}")
-            os.rmdir(f"{TRAINING_PATH}/{name+'_'+str(i)}")
+            os.rmdir(f"{DEST}/{name+'_'+str(i)}/{i}")
+            os.rmdir(f"{DEST}/{name+'_'+str(i)}")
             continue
 
     #Delete directory with subclips
