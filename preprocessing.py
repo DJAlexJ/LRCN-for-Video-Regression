@@ -110,7 +110,7 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
     #Extracting subclip from trailer
     base = 10
 
-    os.mkdir(f"{FPATH}/{name}")
+    os.makedirs(f"{FPATH}/{name}", exist_ok=True)
     for i in range(n_subclips): 
         if verbose:
             print(f"{i} iteration...")
@@ -148,13 +148,13 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
     if name in os.listdir(f"{FPATH}"):   
         shutil.rmtree(f"{FPATH}/{name}")
 
-def movie_preprocessing(movie_list, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
+def movies_preprocess(movie_list, train=True, n_subclips=3, subclip_duration=30, frequency=45, verbose=False):
     for movie_name in movie_list:
         print(f"Preprocessing {movie_name}")
-        preprocess(movie_name, n_subclips, subclip_duration, frequency, verbose)
+        preprocess(movie_name, train, n_subclips, subclip_duration, frequency, verbose)
         
 
 if __name__ == '__main__':
     markup = pd.read_csv(MARKUP_PATH)
     movie_list = markup['Name'].values
-    movie_preprocessing(movie_list=movie_list, verbose=True)
+    movies_preprocess(movie_list=movie_list, verbose=True)

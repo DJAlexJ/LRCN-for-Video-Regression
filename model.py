@@ -1,4 +1,6 @@
 import torch
+import os
+import random
 import preprocessing as prep
 from loading_data import load_data
 
@@ -6,18 +8,12 @@ from config import TRAINING_PATH, PREDICTION_PATH, TEST_TRAILER_NAME, PATH_MODEL
 
 
 def activation_func(activation):
-    return  nn.ModuleDict([
+    return  torch.nn.ModuleDict([
         ['relu', torch.nn.ReLU()],
         ['leaky_relu', torch.nn.LeakyReLU(negative_slope=0.01)],
-        ['selu', nn.SELU()]
+        ['selu', torch.nn.SELU()]
     ])[activation]
 
-def optimizer_choice(optimizer, parameters, lr=3e-4):
-    return torch.nn.ModuleDict([
-        ['adam', torch.optim.Adam(parameters, lr=lr)],
-        ['rmsprop', torch.optim.RMSprop(parameters, lr=lr)],
-        ['sgd', torch.optim.SGD(parameters, lr=lr)]
-    ])[optimizer]
 
 def loss_choice(loss):
     return torch.nn.ModuleDict([
@@ -70,13 +66,13 @@ class LRCN(torch.nn.Module):
         out = self.linear(out)
         return out[:,-1,:]
     
-    def train(self, dir_names, X_test, y_test, lr=3e-4, loss_name='mse', optimizer_name='adam', n_epoch=5, batch_size=10, device='cpu', use_checkpoint=False, use_tensorb=False, verbose=False):
+    def train(self, dir_names, X_test, y_test, lr=3e-4, loss_name='mse', n_epoch=5, batch_size=10, device='cpu', use_checkpoint=False, use_tensorb=False, verbose=False):
         
         #Activating tensorboard
 #         if use_tensorb:
 #             tb = SummaryWriter()
 
-        optimizer = optimizer_choice(optimizer_name, self.parameters(), lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         loss = loss_choice(loss_name)
       
         dir_names = list(filter(lambda x: os.path.isdir(f"{TRAINING_PATH}/{x}"), dir_names)) #Filtering waste files
@@ -87,6 +83,7 @@ class LRCN(torch.nn.Module):
 
         learning_dir_names = dir_names.copy()
         #Training model
+        print('---------------TRAINING----------------')
         for epoch in range(n_epoch):
             dir_names = learning_dir_names.copy()
             train_loss = 0
@@ -108,14 +105,14 @@ class LRCN(torch.nn.Module):
             train_loss_history.append(train_loss)
 
             with torch.no_grad():
-                test_preds = model.forward(X_test).view(y_test.size()[0])
+                test_preds = self.forward(X_test).view(y_test.size()[0])
                 test_loss_history.append(loss(test_preds, y_test).data.cpu())
 
             #Saving checkpoint
             if use_checkpoint:
                 torch.save({
                         'epoch': epoch,
-                        'model_state_dict': model.state_dict(),
+                        'model_state_dict': self.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
                         loss_name: test_mse_history[-1],
                         }, PATH_MODEL_CHECKPOINT)
@@ -127,14 +124,17 @@ class LRCN(torch.nn.Module):
 
 #         if use_tensorb:
 #             tb.close()
+        print('---------------------------------------')
 
         return [train_loss_history, test_loss_history]
 
-    def predict(self, movie_name, verbose=False)
-    
+    def predict(self, movie_name, verbose=False):
+        print('----------GETTING PREDICTION-----------')
+        
         prep.preprocess(movie_name, train=False, n_subclips=1, verbose=verbose)
         name = movie_name.rsplit('.', 1)[0]+'_0' #Getting appropriate name
         image = load_data([name], train=False, verbose=verbose, batch_size=1)
-        prediction = model.forward(image).detach().unsqueeze(-1).item()
+        prediction = self.forward(image).detach().unsqueeze(-1).item()
+        print('---------------------------------------')
         
         return prediction
