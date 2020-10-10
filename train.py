@@ -4,25 +4,60 @@ import random
 import os
 import torch
 from torchvision import datasets
+import argparse
 #from torch.utils.tensorboard import SummaryWriter
 from model import LRCN
 from loading_data import load_data
 from config import TRAINING_PATH, PATH_MODEL_CHECKPOINT
 
-def init_model(device='cpu'):
-    model = LRCN()
-    loss = torch.nn.MSELoss()
-    mae = torch.nn.L1Loss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=9e-4)
-    model.to(device) 
-    return model, (loss, mae), optimizer
 
-def create_test(dir_names, device='cpu', verbose=False, batch_size=100):
-    X_test, y_test, dir_names = load_data(dir_names, verbose=True, batch_size=batch_size)
-    X_test = X_test.to(device).float()
-    y_test = y_test.to(device).float()
+def get_args():
+    parser = argparse.ArgumentParser()
+    arg = parser.add_argument
+    arg("-i", "--input_path", type=Path, help="Path with training trailers", required=True)
+    arg("-out", "--output_path", type=Path, help="Path to output file with movie scores", required=True)
+    arg("-l", "--loss", type=str, default='mse', help="Loss function")
+    arg("-a", "--activation", type=str, default='relu, help="Activation function")
+    arg("-ne", "--n_epoch", type=int, default=7, help="Number of epochs")
+    arg("-bs", "--batch_size", type=int, default=10, help="Batch size")
+    arg("-lr", "--learning_rate", type=int, default=3e-4, help="Learning rate")
+    arg("-ns", "--n_subclips", type=int, default=3, "Number of sublcips extracted from each video")
+    arg("-prep", "--preprocessing", default=True, help="Whether to perform preprocessing")
+    arg("-v", "--verbose", default=False, help="Verbosity")
+    arg("-d", "--device", default='cpu', type=str, help="Device for computations")
+    arg("-vis", "--visualize", action="store_true", help="Visualize results")
+  
+
+def train():
+    args = get_args()
     
-    return X_test, y_test, dir_names
+    hparams = {
+            "input_path": args.input_path,
+            "output_path": args.output_path,
+            "loss": args.loss,
+            "activation": args.activation,
+            "n_epoch": args.n_epoch,
+            "batch_size": args.batch_size,
+            "n_subclips": args.n_subclips,
+            "preprocessing": args.preprocessing,
+            "verbose": args.verbose,
+            "device": args.device,
+            "visualize": args.visualize,
+        }
+    
+    if hparams['preprocessing'] == True:
+        prep.movies_preprocess(os.listdir(hparams['input_path'], train=True, n_subclips=hparams['n_subclips'], verbose=hparams['verbose'])
+                               
+    model = LRCN(activation=hparams['activation'])
+    model.to(hparams['device'])
+                               
+    dir_names = os.listdir(TRAINING_PATH)
+    dir_names = list(filter(lambda x: os.path.isdir(f"{TRAINING_PATH}/{x}"), dir_names)) #Filtering waste files
+
+    X_test, y_test, dir_names = ld.load_data(dir_names, train=True, verbose=hparams['verbose'], batch_size=1)
+    model.train()
+                               
+                               
 
 def train(dir_names, X_test, y_test, n_epoch=5, batch_size=10, device='cpu', use_checkpoint=False, use_tensorb=False, verbose=False):
     
@@ -85,4 +120,8 @@ def train(dir_names, X_test, y_test, n_epoch=5, batch_size=10, device='cpu', use
      #    tb.close()
         
     return [train_mse_history, test_mse_history]
+                               
+
+if __name__ == "__main__":
+    train()
 

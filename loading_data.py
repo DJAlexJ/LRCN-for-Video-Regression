@@ -33,6 +33,7 @@ def load_data(dir_names, train=True, verbose=False, batch_size=6, sequence_size=
     bs = batch_size
     lst_images = []
     labels = []
+    names = []
     for subdir in dir_names:
         if not os.path.isdir(f'{DEST}/{subdir}'):
             continue
@@ -47,6 +48,7 @@ def load_data(dir_names, train=True, verbose=False, batch_size=6, sequence_size=
             if train:
                 labels.append(markup[markup.Title == name].Score.values[0])  
             images, _ = next(iter(dataloader))
+            names.append(name)
             if images.size()[0] < sequence_size:
                 images = torch.cat((images, torch.zeros((sequence_size-images.size()[0], 3, 224, 224)))) #Appending zero tensors to make all sequences equal
                 
@@ -61,5 +63,5 @@ def load_data(dir_names, train=True, verbose=False, batch_size=6, sequence_size=
     if train:
         return images, labels, dir_names
     else:
-        return images
+        return images, names
 

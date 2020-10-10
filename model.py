@@ -8,6 +8,11 @@ from config import TRAINING_PATH, PREDICTION_PATH, TEST_TRAILER_NAME, PATH_MODEL
 
 
 def activation_func(activation):
+    assert activation in ['relu', 'leaky_relu', 'selu'] "ActivationError"
+    except "ActivationError":
+        print("activation must be relu, leaky_relu or selu, thus, relu will be used")
+        return torch.nn.ReLU()
+    
     return  torch.nn.ModuleDict([
         ['relu', torch.nn.ReLU()],
         ['leaky_relu', torch.nn.LeakyReLU(negative_slope=0.01)],
@@ -16,6 +21,11 @@ def activation_func(activation):
 
 
 def loss_choice(loss):
+    assert loss in ['mse', 'mae', 'smooth_mae'] "LossError"
+    except "LossError":
+        print("loss must be mse, mae or smooth_mae, thus, mse will be used")
+        return torch.nn.MSELoss()
+    
     return torch.nn.ModuleDict([
         ['mse', torch.nn.MSELoss()],
         ['mae', torch.nn.L1Loss()],
@@ -56,6 +66,7 @@ class LRCN(torch.nn.Module):
         #batch first: data formatted in (batch, seq, feature)
         self.rnn = torch.nn.LSTM(input_size=embedding_size, hidden_size=LSTM_size, num_layers=LSTM_layers, batch_first=True)
         self.linear = torch.nn.Linear(LSTM_size, 1)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, x):
         heatmaps = []
@@ -72,7 +83,6 @@ class LRCN(torch.nn.Module):
 #         if use_tensorb:
 #             tb = SummaryWriter()
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         loss = loss_choice(loss_name)
       
         dir_names = list(filter(lambda x: os.path.isdir(f"{TRAINING_PATH}/{x}"), dir_names)) #Filtering waste files
@@ -89,7 +99,7 @@ class LRCN(torch.nn.Module):
             train_loss = 0
             for i in range(0, len(learning_dir_names), batch_size):
                 
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 X_batch, y_batch, dir_names = load_data(dir_names, verbose, batch_size=batch_size)  
 
                 X_batch = X_batch.to(device).float()
@@ -100,7 +110,7 @@ class LRCN(torch.nn.Module):
                 loss_value.backward()
 
                 train_loss += loss_value.data.cpu()
-                optimizer.step()
+                self.optimizer.step()
 
             train_loss_history.append(train_loss)
 
@@ -127,13 +137,32 @@ class LRCN(torch.nn.Module):
         print('---------------------------------------')
 
         return [train_loss_history, test_loss_history]
+    
+    def predict(self, dir_names, verbose=False, preprocess=False, saving_results=False, input_path='./', output_path='./'):
+        
+        if preprocess == True:
+            prep.movies_preporcess(os.listdir(input_path), train=False, n_subclips=1, verbose=verbose)
+            dir_names = os.listdir(PREDICTION_PATH)
+            dir_names = list(filter(lambda x: os.path.isdir(f"{path}/{x}"), dir_names))
+            
+        images, names = load_data(dir_names, train=False, verbose=verbose, batch_size=len(os.listdir(input_path)))
+        predictions = self.forward(images).detach().unsqueeze(-1)
+        
+        if saving_results==True:
+            with open(output_path, 'w') as f:
+                for name, score in zip(predictions, names):
+                    f.write(f"{name} - {score}\n")                        
 
-    def predict(self, movie_name, verbose=False):
+        return predictions
+                
+        
+
+    def predict_single(self, movie_name, verbose=False):
         print('----------GETTING PREDICTION-----------')
         
         prep.preprocess(movie_name, train=False, n_subclips=1, verbose=verbose)
         name = movie_name.rsplit('.', 1)[0]+'_0' #Getting appropriate name
-        image = load_data([name], train=False, verbose=verbose, batch_size=1)
+        image, _ = load_data([name], train=False, verbose=verbose, batch_size=1)
         prediction = self.forward(image).detach().unsqueeze(-1).item()
         print('---------------------------------------')
         
