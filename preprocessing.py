@@ -17,6 +17,12 @@ from config import FPATH, TRAINING_PATH, PREDICTION_PATH, MARKUP_PATH
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 
 
+def format_ok(f):
+    if f in ['mov', 'mp4', 'flv']:
+        return True
+    return False
+
+
 def extract_frames(video_path, frames_dir, overwrite=False, start=-1, end=-1, every=1):
     """
     Extract frames from a video using decord's VideoReader
@@ -93,6 +99,14 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
       :param frequency: frequency of extracting frames from subclips
       :param verbose: increase verbosity if True
     """
+    
+    name = '.'.join(movie_name.split('.')[:-1])
+    format_ = movie_name.split('.')[-1]
+    
+    if not format_ok(format_):
+        print('Skipping file, which is not a video...')
+        return
+        
     if train == True:
         if not os.path.isdir(TRAINING_PATH):
             os.mkdir(TRAINING_PATH)
@@ -102,10 +116,9 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
             os.mkdir(PREDICTION_PATH)
         DEST = PREDICTION_PATH
         
-    name = '.'.join(movie_name.split('.')[:-1])
-    format = movie_name.split('.')[-1]
-    if format == 'flv':   #Decord does not work with flv format
-        format = 'mov'
+    
+    if format_ == 'flv':   #Decord does not work with flv format
+        format_ = 'mov'
 
     #Extracting subclip from trailer
     base = 10
@@ -116,7 +129,7 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
             print(f"{i} iteration...")
             print("....Making subclip....")
         try:
-            ffmpeg_extract_subclip(f"{FPATH}/{movie_name}", base, base+subclip_duration, targetname=f"{FPATH}/{name}/{i}.{format}")
+            ffmpeg_extract_subclip(f"{FPATH}/{movie_name}", base, base+subclip_duration, targetname=f"{FPATH}/{name}/{i}.{format_}")
             base = base + subclip_duration
         except BaseException:
             print(f"Some error occured during {i+1} extraction")
@@ -124,12 +137,12 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
 
         #Check if all subclips were correctly created
         try:
-            video = moviepy.editor.VideoFileClip(f"{FPATH}/{name}/{i}.{format}")
+            video = moviepy.editor.VideoFileClip(f"{FPATH}/{name}/{i}.{format_}")
             if int(video.duration) <= subclip_duration//2:
                 raise DurationError
         except:
             print(f"The {i} subclip was not correctly created, deleting...")
-            os.remove(f"{FPATH}/{name}/{i}.{format}")
+            os.remove(f"{FPATH}/{name}/{i}.{format_}")
             continue
 
         #Creating frames
@@ -137,7 +150,7 @@ def preprocess(movie_name, train=True, n_subclips=3, subclip_duration=30, freque
             print("....Extracting frames....")
         os.makedirs(f"{DEST}/{name+'_'+str(i)}", exist_ok=True)   #Creating directory for Train dataset
         try:
-            video_to_frames(f"{FPATH}/{name}/{i}.{format}", f"{DEST}/{name+'_'+str(i)}", overwrite=False, every=frequency)
+            video_to_frames(f"{FPATH}/{name}/{i}.{format_}", f"{DEST}/{name+'_'+str(i)}", overwrite=False, every=frequency)
         except:
             print("Error occured while executing VIDEO_TO_FRAMES")
             os.rmdir(f"{DEST}/{name+'_'+str(i)}/{i}")

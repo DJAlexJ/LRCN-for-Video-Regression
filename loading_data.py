@@ -55,7 +55,7 @@ def load_data(dir_names, train=True, verbose=False, batch_size=6, sequence_size=
             lst_images.append(images)
             bs -= 1
         except:
-            print("File is not found in the markup")
+            print(f"File {name} is not found in the markup")
     
     dir_names = dir_names[batch_size:] #delete loaded subdir names to remove these frames from futher sequences
     images = torch.stack(lst_images)
