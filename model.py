@@ -4,12 +4,13 @@ import random
 import preprocessing as prep
 from loading_data import load_data
 
-from config import TRAINING_PATH, PREDICTION_PATH, TEST_TRAILER_NAME, PATH_MODEL_CHECKPOINT
+from config import TRAINING_PATH, PREDICTION_PATH, TEST_TRAILER_NAME, MODEL_WEIGHTS
 
 
 def activation_func(activation):
-    assert activation in ['relu', 'leaky_relu', 'selu'] "ActivationError"
-    except "ActivationError":
+    try:
+        assert activation in ['relu', 'leaky_relu', 'selu'], "ActivationError"
+    except AssertionError:
         print("activation must be relu, leaky_relu or selu, thus, relu will be used")
         return torch.nn.ReLU()
     
@@ -21,8 +22,9 @@ def activation_func(activation):
 
 
 def loss_choice(loss):
-    assert loss in ['mse', 'mae', 'smooth_mae'] "LossError"
-    except "LossError":
+    try:
+        assert loss in ['mse', 'mae', 'smooth_mae'], "LossError"
+    except AssertionError:
         print("loss must be mse, mae or smooth_mae, thus, mse will be used")
         return torch.nn.MSELoss()
     
@@ -66,7 +68,6 @@ class LRCN(torch.nn.Module):
         #batch first: data formatted in (batch, seq, feature)
         self.rnn = torch.nn.LSTM(input_size=embedding_size, hidden_size=LSTM_size, num_layers=LSTM_layers, batch_first=True)
         self.linear = torch.nn.Linear(LSTM_size, 1)
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, x):
         heatmaps = []
@@ -77,12 +78,14 @@ class LRCN(torch.nn.Module):
         out = self.linear(out)
         return out[:,-1,:]
     
-    def train(self, dir_names, X_test, y_test, lr=3e-4, loss_name='mse', n_epoch=5, batch_size=10, device='cpu', use_checkpoint=False, use_tensorb=False, verbose=False):
+    def fit(self, dir_names, X_test, y_test, lr=3e-4, loss_name='mse', n_epoch=5, batch_size=10, device='cpu', saving_results=False, use_tensorb=False, verbose=False):
         
         #Activating tensorboard
 #         if use_tensorb:
 #             tb = SummaryWriter()
-
+        
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+                
         loss = loss_choice(loss_name)
       
         dir_names = list(filter(lambda x: os.path.isdir(f"{TRAINING_PATH}/{x}"), dir_names)) #Filtering waste files
@@ -99,8 +102,9 @@ class LRCN(torch.nn.Module):
             train_loss = 0
             for i in range(0, len(learning_dir_names), batch_size):
                 
-                self.optimizer.zero_grad()
-                X_batch, y_batch, dir_names = load_data(dir_names, verbose, batch_size=batch_size)  
+                optimizer.zero_grad()
+                print(dir_names)
+                X_batch, y_batch, dir_names = load_data(dir_names, train=True, verbose=verbose, batch_size=batch_size)  
 
                 X_batch = X_batch.to(device).float()
                 y_batch = y_batch.to(device).float()
@@ -110,22 +114,13 @@ class LRCN(torch.nn.Module):
                 loss_value.backward()
 
                 train_loss += loss_value.data.cpu()
-                self.optimizer.step()
+                optimizer.step()
 
             train_loss_history.append(train_loss)
 
             with torch.no_grad():
                 test_preds = self.forward(X_test).view(y_test.size()[0])
                 test_loss_history.append(loss(test_preds, y_test).data.cpu())
-
-            #Saving checkpoint
-            if use_checkpoint:
-                torch.save({
-                        'epoch': epoch,
-                        'model_state_dict': self.state_dict(),
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        loss_name: test_mse_history[-1],
-                        }, PATH_MODEL_CHECKPOINT)
 
 #             if use_tensorb:
 #                 tb.add_scalar(loss_name, test_loss_history[-1], epoch)
@@ -134,6 +129,9 @@ class LRCN(torch.nn.Module):
 
 #         if use_tensorb:
 #             tb.close()
+        
+        if saving_results==True:
+            torch.save(self.state_dict(), MODEL_WEIGHTS)
         print('---------------------------------------')
 
         return [train_loss_history, test_loss_history]
@@ -141,17 +139,17 @@ class LRCN(torch.nn.Module):
     def predict(self, dir_names, verbose=False, preprocess=False, saving_results=False, input_path='./', output_path='./'):
         
         if preprocess == True:
-            prep.movies_preporcess(os.listdir(input_path), train=False, n_subclips=1, verbose=verbose)
+            prep.movies_preprocess(os.listdir(input_path), train=False, n_subclips=1, verbose=verbose)
             dir_names = os.listdir(PREDICTION_PATH)
-            dir_names = list(filter(lambda x: os.path.isdir(f"{path}/{x}"), dir_names))
+            dir_names = list(filter(lambda x: os.path.isdir(f"{PREDICTION_PATH}/{x}"), dir_names))
             
         images, names = load_data(dir_names, train=False, verbose=verbose, batch_size=len(os.listdir(input_path)))
-        predictions = self.forward(images).detach().unsqueeze(-1)
+        predictions = self.forward(images).detach()
         
         if saving_results==True:
             with open(output_path, 'w') as f:
-                for name, score in zip(predictions, names):
-                    f.write(f"{name} - {score}\n")                        
+                for name, score in zip(names, predictions):
+                    f.write(f"{name} - {score.item()}\n")                        
 
         return predictions
                 
