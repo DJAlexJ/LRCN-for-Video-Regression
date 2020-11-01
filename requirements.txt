@@ -1,0 +1,12 @@
+numpy
+pandas
+tqdm
+imageio
+flask
+torch
+torchvision
+waitress
+Pillow
+opencv-python
+moviepy
+xlrd
