@@ -2,8 +2,7 @@ __pycache__/
 results.txt
 .ipynb_checkpoints/
 .ipynb_checkpoints
-lrcnreg.egg-info/
-lrcnreg.egg-info
+*.egg-info/
 Markup.xls
 .DS_Store
 "lrcnreg/85.Дикая.mp4"
