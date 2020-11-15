@@ -1,10 +1,10 @@
 import pytest
 import torch
-import loading_data as ld
-import preprocessing as prep
+import lrcnreg.scripts.loading_data as ld
+import lrcnreg.scripts.preprocessing as prep
 import shutil
 import os
-from config import TRAINING_PATH, PREDICTION_PATH
+from lrcnreg.config import TRAINING_PATH, PREDICTION_PATH
 
 @pytest.fixture(scope='module')
 def train_prep():

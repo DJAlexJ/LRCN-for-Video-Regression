@@ -1,8 +1,8 @@
 import pytest
-import preprocessing as prep
 import shutil
 import os
-from config import TEST_TRAILER, TRAINING_PATH, PREDICTION_PATH
+import lrcnreg.scripts.preprocessing as prep
+from lrcnreg.config import TEST_TRAILER, TRAINING_PATH, PREDICTION_PATH
 
 
 def test_format_ok():

@@ -2,10 +2,10 @@ import pytest
 import torch
 import os
 import shutil
-from config import TRAINING_PATH, PREDICTION_PATH, MODEL_WEIGHTS
-import model as m
-import preprocessing as prep
-import loading_data as ld
+from lrcnreg.config import TRAINING_PATH, PREDICTION_PATH, MODEL_WEIGHTS
+import lrcnreg.scripts.model as m
+import lrcnreg.scripts.preprocessing as prep
+import lrcnreg.scripts.loading_data as ld
 
 
 @pytest.fixture(scope='module')
