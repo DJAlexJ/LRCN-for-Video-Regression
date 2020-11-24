@@ -1,4 +1,4 @@
-MARKUP_PATH = './markup_test.xls' #path to the markup
+MARKUP_PATH = './markup.xls' #path to the markup
 FPATH = '.' #path to the video trailers
 TRAINING_PATH = './train' #path to final train folder
 PREDICTION_PATH = './predictions' #path to folder for images to predict
