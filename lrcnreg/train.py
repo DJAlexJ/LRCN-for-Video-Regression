@@ -10,13 +10,12 @@ import lrcnreg.scripts.loading_data as ld
 #from torch.utils.tensorboard import SummaryWriter
 from lrcnreg.scripts.model import LRCN
 from lrcnreg.scripts.loading_data import load_data
-from lrcnreg.config import TRAINING_PATH
+from lrcnreg.config import TRAINING_PATH, FPATH
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     arg = parser.add_argument
-    arg("-i", "--input_path", type=str, help="Path with training trailers", required=True)
     arg("-l", "--loss", type=str, default='mse', help="Loss function")
     arg("-a", "--activation", type=str, default='relu', help="Activation function")
     arg("-ne", "--n_epoch", type=int, default=7, help="Number of epochs")
@@ -28,14 +27,14 @@ def get_args():
     arg("-prep", "--preprocessing", default=True, help="Whether to perform preprocessing")
     arg("-v", "--verbose", default=False, help="Verbosity")
     arg("-d", "--device", default='cpu', type=str, help="Device for computations")
-    arg("-vis", "--visualize", default=False, action="store_true", help="Visualize results")
+    arg("--logs", default=False, action="store_true", help="Save logs")
     return parser.parse_args()
 
 def train():
     args = get_args()
     
     if args.preprocessing == True:
-        prep.movies_preprocess(os.listdir(args.input_path), train=True, n_subclips=args.n_subclips, verbose=args.verbose)
+        prep.movies_preprocess(os.listdir(FPATH), train=True, n_subclips=args.n_subclips, verbose=args.verbose)
                                
     model = LRCN(activation=args.activation)
     model.to(args.device)
