@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import os
 import torch
+import pickle
 from torchvision import datasets
 import argparse
 import lrcnreg.scripts.preprocessing as prep
@@ -44,9 +45,13 @@ def train():
 
     X_test, y_test, dir_names = ld.load_data(dir_names, train=True, verbose=args.verbose, batch_size=args.test_batch_size)
     
-    model.fit(dir_names, X_test, y_test, lr=args.learning_rate,                     loss_name=args.loss, n_epoch=args.n_epoch,
+    logs = model.fit(dir_names, X_test, y_test, lr=args.learning_rate,                     loss_name=args.loss, n_epoch=args.n_epoch,
                 batch_size=args.batch_size, device=args.device,
                 verbose=args.verbose, saving_results=args.save_weights)
+    
+    if args.logs:
+        with open(f'{FPATH}/logs.pkl', 'wb') as f:
+        pickle.dump(logs, f)
                                
                                
 if __name__ == "__main__":
