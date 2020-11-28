@@ -51,7 +51,7 @@ def train():
     
     if args.logs:
         with open(f'{FPATH}/logs.pkl', 'wb') as f:
-        pickle.dump(logs, f)
+            pickle.dump(logs, f)
                                
                                
 if __name__ == "__main__":
