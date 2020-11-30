@@ -5,7 +5,7 @@ To begin working with LRCN library, perform the following steps:
   1. `!git clone https://github.com/DJAlexJ/LRCN-for-Video-Regression.git`
   2. `cd LRCN-for-Video-Regression && pip install -e .`
 
-Before training you have to create folder with movie trailers and prepare a markup for them. Paths to the trailers, markup and model wieghts should be specified in config.py
+Before training you have to a create folder with movie trailers and prepare a markup for them. Paths to the trailers, markup and model wieghts should be specified in config.py
 
 ### Markup example
 |  Title   |  Score  |
