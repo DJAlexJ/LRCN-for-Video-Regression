@@ -5,7 +5,7 @@ To begin working with LRCN library, perform the following steps:
   1. `!git clone https://github.com/DJAlexJ/LRCN-for-Video-Regression.git`
   2. `cd LRCN-for-Video-Regression && pip install -e .`
 
-Before training you have to create folder with movie trailers and prepare markup for them. Paths to the trailers, markup and model wieghts should be specified in config.py
+Before training you have to create folder with movie trailers and prepare a markup for them. Paths to the trailers, markup and model wieghts should be specified in config.py
 
 ### Training model
 from lrcnreg/lrcnreg folder:
@@ -14,4 +14,4 @@ from lrcnreg/lrcnreg folder:
 
 ### Getting predictions#
 from lrcnreg/lrcnreg/scripts:
-`python predict.py --input_path='Path to the trailers' --output_path='File with predictions (e.g. ./res.txt)' --weights='Path to model weights'`
+`python predict.py --input_path='Path to the trailers' --output_path='File with predictions (e.g. ./res.txt)' --weights='Path to the model weights'`
