@@ -1,4 +1,5 @@
-# LRCN (Long-term Reccurent Convolutional Networks) approach for video regression (idea from https://arxiv.org/pdf/1411.4389.pdf).
+# LRCN (Long-term Reccurent Convolutional Networks) approach for video regression 
+Idea is taken from https://arxiv.org/pdf/1411.4389.pdf
 
 To begin working with LRCN library, perform the following steps:
 
