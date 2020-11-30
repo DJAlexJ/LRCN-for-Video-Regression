@@ -19,6 +19,6 @@ from lrcnreg/lrcnreg folder:
 `python train.py` (`python train.py -h` to see additional arguments)
 
 
-### Getting predictions#
+### Getting predictions
 from lrcnreg/lrcnreg/scripts:
 `python predict.py --input_path='Path to the trailers' --output_path='File with predictions (e.g. ./res.txt)' --weights='Path to the model weights'`
